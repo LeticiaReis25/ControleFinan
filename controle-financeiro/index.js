@@ -128,6 +128,81 @@ app.delete("/usuarios/:id", (req, res) => {
   res.status(204).end();
 });
 
+
+
+
+app.post("/contas", (req, res) => {
+  const { nome, usuarioId } = req.body;
+
+  if (!nome || !Number.isInteger(usuarioId)) {
+    return res.status(400).json({
+      erro: "Nome e usuarioId são obrigatórios."
+    });
+  }
+
+  const usuario = usuarios.find(
+    u => u.id === usuarioId
+  );
+
+  if (!usuario) {
+    return res.status(404).json({
+      erro: "Usuário não encontrado."
+    });
+  }
+
+  const conta = {
+    id: idConta++,
+    nome,
+    usuarioId
+  };
+
+  contas.push(conta);
+  res.status(201).json(conta);
+});
+
+
+app.get("/contas", (req, res) => {
+  const { usuarioId } = req.query;
+
+  const resultado = usuarioId
+    ? contas.filter(c => c.usuarioId === Number(usuarioId))
+    : contas;
+
+  res.json(resultado);
+});
+
+
+app.get("/contas/:id/saldo", (req, res) => {
+  const conta = contas.find(
+    c => c.id === Number(req.params.id)
+  );
+
+  if (!conta) {
+    return res.status(404).json({
+      erro: "Conta não encontrada."
+    });
+  }
+
+  const movimentos = lancamentos.filter(
+    l => l.contaId === conta.id
+  );
+
+  const receitas = movimentos
+    .filter(l => l.tipo === "receita")
+    .reduce((total, l) => total + l.valor, 0);
+
+  const despesas = movimentos
+    .filter(l => l.tipo === "despesa")
+    .reduce((total, l) => total + l.valor, 0);
+
+  res.json({
+    conta: conta.nome,
+    receitas: Number(receitas.toFixed(2)),
+    despesas: Number(despesas.toFixed(2)),
+    saldo: Number((receitas - despesas).toFixed(2))
+  });
+});
+
 app.listen(PORTA, () => {
     console.log(`Servidor funcionando na porta ${PORTA}`)
 })
