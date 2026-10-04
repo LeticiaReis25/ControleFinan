@@ -10,6 +10,12 @@ let contas = [];
 let categorias = [];
 let lancamentos = [];
 
+app.get("/", (req, res) => {
+    res.json({
+        mensagem: "API de controle Financeiro Pessoal Funcionando!"
+    });
+});
+
 app.listen(PORTA, () => {
     console.log(`Servidor funcionando na porta ${PORTA}`)
 })
