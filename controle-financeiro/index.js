@@ -231,7 +231,7 @@ app.post("/categorias", (req, res) => {
   res.status(201).json(categoria);
 });
 
-// Consultar categorias
+
 app.get("/categorias", (req, res) => {
   const { usuarioId } = req.query;
 
@@ -242,6 +242,149 @@ app.get("/categorias", (req, res) => {
     : categorias;
 
   res.json(resultado);
+});
+
+
+
+
+app.post("/lancamentos", (req, res) => {
+  const {
+    usuarioId,
+    contaId,
+    categoriaId,
+    descricao,
+    valor,
+    tipo,
+    data
+  } = req.body;
+
+  if (
+    !usuarioId ||
+    !contaId ||
+    !categoriaId ||
+    !descricao ||
+    !valor ||
+    !tipo ||
+    !data
+  ) {
+    return res.status(400).json({
+      erro: "Todos os campos são obrigatórios."
+    });
+  }
+
+  if (tipo !== "receita" && tipo !== "despesa") {
+    return res.status(400).json({
+      erro: "O tipo deve ser receita ou despesa."
+    });
+  }
+
+  const conta = contas.find(
+    c => c.id === usuarioId
+  );
+
+  const categoria = categorias.find(
+    c => c.id === categoriaId
+  );
+
+  if (!conta || !categoria) {
+    return res.status(404).json({
+      erro: "Conta ou categoria não encontrada."
+    });
+  }
+
+  const lancamento = {
+    id: idLancamento++,
+    usuarioId,
+    contaId,
+    categoriaId,
+    descricao,
+    valor,
+    tipo,
+    data
+  };
+
+  lancamentos.push(lancamento);
+
+  res.status(201).json(lancamento);
+});
+
+
+app.get("/lancamentos", (req, res) => {
+  res.json(lancamentos);
+});
+
+
+app.get("/lancamentos/:id", (req, res) => {
+  const lancamento = lancamentos.find(
+    l => l.id === Number(req.params.id)
+  );
+
+  if (!lancamento) {
+    return res.status(404).json({
+      erro: "Lançamento não encontrado."
+    });
+  }
+
+  res.json(lancamento);
+});
+
+
+app.put("/lancamentos/:id", (req, res) => {
+  const lancamento = lancamentos.find(
+    l => l.id === Number(req.params.id)
+  );
+
+  if (!lancamento) {
+    return res.status(404).json({
+      erro: "Lançamento não encontrado."
+    });
+  }
+
+  const {
+    descricao,
+    valor,
+    tipo,
+    data
+  } = req.body;
+
+  if (descricao) {
+    lancamento.descricao = descricao;
+  }
+
+  if (valor) {
+    lancamento.valor = valor;
+  }
+
+  if (tipo) {
+    lancamento.tipo = tipo;
+  }
+
+  if (data) {
+    lancamento.data = data;
+  }
+
+  res.json(lancamento);
+});
+
+
+app.delete("/lancamentos/:id", (req, res) => {
+  const id = Number(req.params.id);
+
+  const existe = lancamentos.some(
+    l => l.id === id
+  );
+
+  if (!existe) {
+    return res.status(404).json({
+      erro: "Lançamento não encontrado."
+    });
+  }
+
+  lancamentos = lancamentos.filter(
+    l => l.id !== id
+  );
+
+  res.status(204).end();
 });
 
 app.listen(PORTA, () => {
