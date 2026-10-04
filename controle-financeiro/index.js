@@ -203,6 +203,47 @@ app.get("/contas/:id/saldo", (req, res) => {
   });
 });
 
+
+
+
+app.post("/categorias", (req, res) => {
+  const { nome, usuarioId } = req.body;
+
+  if (!nome || !Number.isInteger(usuarioId)) {
+    return res.status(400).json({
+      erro: "Nome e usuarioId são obrigatórios."
+    });
+  }
+
+  if (!usuarios.some(u => u.id === usuarioId)) {
+    return res.status(404).json({
+      erro: "Usuário não encontrado."
+    });
+  }
+
+  const categoria = {
+    id: idCategoria++,
+    nome,
+    usuarioId
+  };
+
+  categorias.push(categoria);
+  res.status(201).json(categoria);
+});
+
+// Consultar categorias
+app.get("/categorias", (req, res) => {
+  const { usuarioId } = req.query;
+
+  const resultado = usuarioId
+    ? categorias.filter(
+        c => c.usuarioId === Number(usuarioId)
+      )
+    : categorias;
+
+  res.json(resultado);
+});
+
 app.listen(PORTA, () => {
     console.log(`Servidor funcionando na porta ${PORTA}`)
 })
