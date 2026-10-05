@@ -281,11 +281,11 @@ app.post("/lancamentos", (req, res) => {
   }
 
   const conta = contas.find(
-    c => c.id === usuarioId
+    c => c.id === contaId && c.usuarioId === usuarioId
   );
 
   const categoria = categorias.find(
-    c => c.id === categoriaId
+    c => c.id === categoriaId && c.usuarioId === usuarioId
   );
 
   if (!conta || !categoria) {
@@ -312,7 +312,29 @@ app.post("/lancamentos", (req, res) => {
 
 
 app.get("/lancamentos", (req, res) => {
-  res.json(lancamentos);
+  const { usuarioId, inicio, fim } = req.query;
+
+  let resultado = lancamentos;
+
+  if (usuarioId) {
+    resultado = resultado.filter(
+      l => l.usuarioId === Number(usuarioId)
+    );
+  }
+
+  if (inicio) {
+    resultado = resultado.filter(
+      l => l.data >= inicio
+    );
+  }
+
+  if (fim) {
+    resultado = resultado.filter(
+      l => l.data <= fim
+    );
+  }
+
+  res.json(resultado);
 });
 
 
