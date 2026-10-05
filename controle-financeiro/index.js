@@ -387,6 +387,48 @@ app.delete("/lancamentos/:id", (req, res) => {
   res.status(204).end();
 });
 
+
+app.get("/resumo-mensal", (req, res) => {
+  const { usuarioId, mes } = req.query;
+
+  if (!usuarioId || !mes) {
+    return res.status(400).json({
+      erro: "Informe o usuarioId e o mês."
+    });
+  }
+
+  const usuario = usuarios.find(
+    u => u.id === Number(usuarioId)
+  );
+
+  if (!usuario) {
+    return res.status(404).json({
+      erro: "Usuário não encontrado."
+    });
+  }
+
+  const movimentos = lancamentos.filter(
+    l =>
+      l.usuarioId === Number(usuarioId) &&
+      l.data.startsWith(mes)
+  );
+
+  const receitas = movimentos
+    .filter(l => l.tipo === "receita")
+    .reduce((total, l) => total + l.valor, 0);
+
+  const despesas = movimentos
+    .filter(l => l.tipo === "despesa")
+    .reduce((total, l) => total + l.valor, 0);
+
+  res.json({
+    mes,
+    totalReceitas: receitas,
+    totalDespesas: despesas,
+    saldoDoMes: receitas - despesas
+  });
+});
+
 app.listen(PORTA, () => {
     console.log(`Servidor funcionando na porta ${PORTA}`)
 })
