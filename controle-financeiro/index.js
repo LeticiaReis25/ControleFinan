@@ -9,11 +9,13 @@ let usuarios = [];
 let contas = [];
 let categorias = [];
 let lancamentos = [];
+let metas = [];
 
 let idUsuario = 1;
 let idConta = 1;
 let idCategoria = 1;
 let idLancamento = 1;
+let idMeta = 1;
 
 app.get("/", (req, res) => {
     res.json({
@@ -429,6 +431,150 @@ app.get("/resumo-mensal", (req, res) => {
   });
 });
 
+
+
+app.post("/metas", (req, res) => {
+  const {
+    usuarioId,
+    nome,
+    valorObjetivo,
+    valorAtual,
+    dataLimite
+  } = req.body;
+
+  if (
+    !usuarioId ||
+    !nome ||
+    !valorObjetivo ||
+    !dataLimite
+  ) {
+    return res.status(400).json({
+      erro: "Usuário, nome, valor objetivo e data limite são obrigatórios."
+    });
+  }
+
+  if (valorObjetivo <= 0) {
+    return res.status(400).json({
+      erro: "O valor objetivo deve ser maior que zero."
+    });
+  }
+
+  const usuario = usuarios.find(
+    u => u.id === usuarioId
+  );
+
+  if (!usuario) {
+    return res.status(404).json({
+      erro: "Usuário não encontrado."
+    });
+  }
+
+  const meta = {
+    id: idMeta++,
+    usuarioId,
+    nome,
+    valorObjetivo,
+    valorAtual: valorAtual || 0,
+    dataLimite
+  };
+
+  metas.push(meta);
+
+  res.status(201).json(meta);
+});
+
+
+app.get("/metas", (req, res) => {
+  const { usuarioId } = req.query;
+
+  const resultado = usuarioId
+    ? metas.filter(
+        m => m.usuarioId === Number(usuarioId)
+      )
+    : metas;
+
+  res.json(resultado);
+});
+
+
+app.get("/metas/:id", (req, res) => {
+  const meta = metas.find(
+    m => m.id === Number(req.params.id)
+  );
+
+  if (!meta) {
+    return res.status(404).json({
+      erro: "Meta não encontrada."
+    });
+  }
+
+  res.json(meta);
+});
+
+
+app.put("/metas/:id", (req, res) => {
+  const meta = metas.find(
+    m => m.id === Number(req.params.id)
+  );
+
+  if (!meta) {
+    return res.status(404).json({
+      erro: "Meta não encontrada."
+    });
+  }
+
+  const {
+    nome,
+    valorObjetivo,
+    valorAtual,
+    dataLimite
+  } = req.body;
+
+  if (nome) {
+    meta.nome = nome;
+  }
+
+  if (valorObjetivo !== undefined) {
+    if (valorObjetivo <= 0) {
+      return res.status(400).json({
+        erro: "O valor objetivo deve ser maior que zero."
+      });
+    }
+
+    meta.valorObjetivo = valorObjetivo;
+  }
+
+  if (valorAtual !== undefined) {
+    meta.valorAtual = valorAtual;
+  }
+
+  if (dataLimite) {
+    meta.dataLimite = dataLimite;
+  }
+
+  res.json(meta);
+});
+
+
+app.delete("/metas/:id", (req, res) => {
+  const id = Number(req.params.id);
+
+  const existe = metas.some(
+    m => m.id === id
+  );
+
+  if (!existe) {
+    return res.status(404).json({
+      erro: "Meta não encontrada."
+    });
+  }
+
+  metas = metas.filter(
+    m => m.id !== id
+  );
+
+  res.status(204).end();
+});
 app.listen(PORTA, () => {
     console.log(`Servidor funcionando na porta ${PORTA}`)
 })
