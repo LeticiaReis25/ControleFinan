@@ -1,8 +1,12 @@
-import { Router } from 'express';
-import * as controller from '../controllers/usuarios.controllers.js';
+import { Router } from "express";
+import * as controller from "../controllers/usuarios.controllers.js";
 
 const router = Router();
-router.get('/', controller.usuarios)
-router.post
-router.put
-router.delete
+
+router.get("/", controller.listar);
+router.post("/", controller.cadastrar);
+router.get("/:id", controller.buscar);
+router.put("/:id", controller.atualizar);
+router.delete("/:id", controller.excluir);
+
+export default router;
