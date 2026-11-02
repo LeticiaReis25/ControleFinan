@@ -1,3 +1,7 @@
-import app from './app.js';
+import app from "./src/app.js";
 
-app.listen(3000, () => console.log('API em http://localhost:3000'));
+const PORTA = 3000;
+
+app.listen(PORTA, () => {
+    console.log(`Servidor funcionando na porta ${PORTA}`);
+});
