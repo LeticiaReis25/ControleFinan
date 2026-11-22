@@ -1,15 +1,23 @@
-function cadastrar(dados, campos) {
-    const usuarioId = Number(campos.usuarioId);
-    const contaId = Number(campos.contaId);
-    const categoriaId = Number(campos.categoriaId);
+import * as lancamentosModel from "../models/lancamentos.model.js";
+import * as contasModel from "../models/contas.model.js";
+import * as categoriasModel from "../models/categoria.model.js";
+
+async function cadastrar(campos) {
+    const {
+        usuarioId,
+        contaId,
+        categoriaId,
+        descricao,
+        tipo,
+        data
+    } = campos;
+
     const valor = Number(campos.valor);
 
-    const { descricao, tipo, data } = campos;
-
     if (
-        !Number.isInteger(usuarioId) ||
-        !Number.isInteger(contaId) ||
-        !Number.isInteger(categoriaId) ||
+        !usuarioId ||
+        !contaId ||
+        !categoriaId ||
         !descricao ||
         !Number.isFinite(valor) ||
         valor <= 0 ||
@@ -31,15 +39,15 @@ function cadastrar(dados, campos) {
         };
     }
 
-    const conta = dados.contas.find(
-        c => c.id === contaId && c.usuarioId === usuarioId
-    );
+    const conta = await contasModel.buscarPorId(contaId);
+    const categoria = await categoriasModel.buscarPorId(categoriaId);
 
-    const categoria = dados.categorias.find(
-        c => c.id === categoriaId && c.usuarioId === usuarioId
-    );
-
-    if (!conta || !categoria) {
+    if (
+        !conta ||
+        !categoria ||
+        conta.usuarioId !== usuarioId ||
+        categoria.usuarioId !== usuarioId
+    ) {
         return {
             status: 404,
             body: { erro: "Conta ou categoria não encontrada." }
@@ -47,7 +55,6 @@ function cadastrar(dados, campos) {
     }
 
     const lancamento = {
-        id: dados.idLancamento++,
         usuarioId,
         contaId,
         categoriaId,
@@ -57,17 +64,20 @@ function cadastrar(dados, campos) {
         data
     };
 
-    dados.lancamentos.push(lancamento);
+    const id = await lancamentosModel.inserir(lancamento);
 
-    return { status: 201, body: lancamento };
+    return {
+        status: 201,
+        body: { _id: id, ...lancamento }
+    };
 }
 
-function listar(dados, filtros) {
-    let resultado = dados.lancamentos;
+async function listar(filtros) {
+    let resultado = await lancamentosModel.buscarTodas();
 
     if (filtros.usuarioId) {
         resultado = resultado.filter(
-            l => l.usuarioId === Number(filtros.usuarioId)
+            l => l.usuarioId === filtros.usuarioId
         );
     }
 
@@ -79,13 +89,14 @@ function listar(dados, filtros) {
         resultado = resultado.filter(l => l.data <= filtros.fim);
     }
 
-    return { status: 200, body: resultado };
+    return {
+        status: 200,
+        body: resultado
+    };
 }
 
-function buscar(dados, id) {
-    const lancamento = dados.lancamentos.find(
-        l => l.id === Number(id)
-    );
+async function buscar(id) {
+    const lancamento = await lancamentosModel.buscarPorId(id);
 
     if (!lancamento) {
         return {
@@ -94,13 +105,14 @@ function buscar(dados, id) {
         };
     }
 
-    return { status: 200, body: lancamento };
+    return {
+        status: 200,
+        body: lancamento
+    };
 }
 
-function atualizar(dados, id, campos) {
-    const lancamento = dados.lancamentos.find(
-        l => l.id === Number(id)
-    );
+async function atualizar(id, campos) {
+    const lancamento = await lancamentosModel.buscarPorId(id);
 
     if (!lancamento) {
         return {
@@ -109,59 +121,69 @@ function atualizar(dados, id, campos) {
         };
     }
 
-    const { descricao, valor, tipo, data } = campos;
+    const atualizacoes = {};
 
-    if (descricao !== undefined) {
-        if (typeof descricao !== "string" || !descricao.trim()) {
+    if (campos.descricao !== undefined) {
+        if (
+            typeof campos.descricao !== "string" ||
+            !campos.descricao.trim()
+        ) {
             return {
                 status: 400,
                 body: { erro: "Descrição inválida." }
             };
         }
 
-        lancamento.descricao = descricao.trim();
+        atualizacoes.descricao = campos.descricao.trim();
     }
 
-    if (valor !== undefined) {
-        if (!Number.isFinite(Number(valor)) || Number(valor) <= 0) {
+    if (campos.valor !== undefined) {
+        if (!Number.isFinite(Number(campos.valor)) || Number(campos.valor) <= 0) {
             return {
                 status: 400,
                 body: { erro: "Valor inválido." }
             };
         }
 
-        lancamento.valor = Number(valor);
+        atualizacoes.valor = Number(campos.valor);
     }
 
-    if (tipo !== undefined) {
-        if (tipo !== "receita" && tipo !== "despesa") {
+    if (campos.tipo !== undefined) {
+        if (campos.tipo !== "receita" && campos.tipo !== "despesa") {
             return {
                 status: 400,
                 body: { erro: "O tipo deve ser receita ou despesa." }
             };
         }
 
-        lancamento.tipo = tipo;
+        atualizacoes.tipo = campos.tipo;
     }
 
-    if (data !== undefined) {
-        lancamento.data = data;
+    if (campos.data !== undefined) {
+        atualizacoes.data = campos.data;
     }
 
-    return { status: 200, body: lancamento };
+    if (Object.keys(atualizacoes).length > 0) {
+        await lancamentosModel.atualizar(id, atualizacoes);
+    }
+
+    return {
+        status: 200,
+        body: { ...lancamento, ...atualizacoes }
+    };
 }
 
-function excluir(dados, id) {
-    id = Number(id);
+async function excluir(id) {
+    const lancamento = await lancamentosModel.buscarPorId(id);
 
-    if (!dados.lancamentos.some(l => l.id === id)) {
+    if (!lancamento) {
         return {
             status: 404,
             body: { erro: "Lançamento não encontrado." }
         };
     }
 
-    dados.lancamentos = dados.lancamentos.filter(l => l.id !== id);
+    await lancamentosModel.remover(id);
 
     return { status: 204 };
 }

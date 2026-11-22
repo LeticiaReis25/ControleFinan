@@ -1,9 +1,7 @@
+import categoriasService from "../services/categoria.services.js";
 
-import categoriasService from "../services/categorias.services.js";
-
-export function cadastrar(req, res) {
-    const resultado = categoriasService.cadastrar(
-        req.app.locals.dados,
+export async function cadastrar(req, res) {
+    const resultado = await categoriasService.cadastrar(
         req.body.nome,
         req.body.usuarioId
     );
@@ -11,9 +9,8 @@ export function cadastrar(req, res) {
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function listar(req, res) {
-    const resultado = categoriasService.listar(
-        req.app.locals.dados,
+export async function listar(req, res) {
+    const resultado = await categoriasService.listar(
         req.query.usuarioId
     );
 

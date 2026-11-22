@@ -1,35 +1,25 @@
 import lancamentosService from "../services/lancamentos.services.js";
 
-export function cadastrar(req, res) {
-    const resultado = lancamentosService.cadastrar(
-        req.app.locals.dados,
-        req.body
-    );
+export async function cadastrar(req, res) {
+    const resultado = await lancamentosService.cadastrar(req.body);
 
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function listar(req, res) {
-    const resultado = lancamentosService.listar(
-        req.app.locals.dados,
-        req.query
-    );
+export async function listar(req, res) {
+    const resultado = await lancamentosService.listar(req.query);
 
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function buscar(req, res) {
-    const resultado = lancamentosService.buscar(
-        req.app.locals.dados,
-        req.params.id
-    );
+export async function buscar(req, res) {
+    const resultado = await lancamentosService.buscar(req.params.id);
 
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function atualizar(req, res) {
-    const resultado = lancamentosService.atualizar(
-        req.app.locals.dados,
+export async function atualizar(req, res) {
+    const resultado = await lancamentosService.atualizar(
         req.params.id,
         req.body
     );
@@ -37,11 +27,8 @@ export function atualizar(req, res) {
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function excluir(req, res) {
-    const resultado = lancamentosService.excluir(
-        req.app.locals.dados,
-        req.params.id
-    );
+export async function excluir(req, res) {
+    const resultado = await lancamentosService.excluir(req.params.id);
 
     if (resultado.status === 204) {
         return res.status(204).end();

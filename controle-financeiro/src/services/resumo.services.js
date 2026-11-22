@@ -1,14 +1,22 @@
-function consultar(dados, usuarioId, mes) {
-    usuarioId = Number(usuarioId);
+import * as usuariosModel from "../models/usuarios.model.js";
+import * as lancamentosModel from "../models/lancamentos.model.js";
 
-    if (!usuarioId || !mes || !/^\d{4}-\d{2}$/.test(mes)) {
+async function consultar(usuarioId, mes) {
+    if (
+        typeof usuarioId !== "string" ||
+        !usuarioId.trim() ||
+        !mes ||
+        !/^\d{4}-\d{2}$/.test(mes)
+    ) {
         return {
             status: 400,
-            body: { erro: "Informe um usuarioId e um mês no formato AAAA-MM." }
+            body: {
+                erro: "Informe um usuarioId e um mês no formato AAAA-MM."
+            }
         };
     }
 
-    const usuario = dados.usuarios.find(u => u.id === usuarioId);
+    const usuario = await usuariosModel.buscarPorId(usuarioId);
 
     if (!usuario) {
         return {
@@ -17,17 +25,19 @@ function consultar(dados, usuarioId, mes) {
         };
     }
 
-    const movimentos = dados.lancamentos.filter(
+    const lancamentos = await lancamentosModel.buscarTodas();
+
+    const movimentos = lancamentos.filter(
         l => l.usuarioId === usuarioId && l.data.startsWith(mes)
     );
 
     const receitas = movimentos
         .filter(l => l.tipo === "receita")
-        .reduce((total, l) => total + l.valor, 0);
+        .reduce((total, l) => total + Number(l.valor), 0);
 
     const despesas = movimentos
         .filter(l => l.tipo === "despesa")
-        .reduce((total, l) => total + l.valor, 0);
+        .reduce((total, l) => total + Number(l.valor), 0);
 
     return {
         status: 200,
@@ -41,4 +51,3 @@ function consultar(dados, usuarioId, mes) {
 }
 
 export default { consultar };
-

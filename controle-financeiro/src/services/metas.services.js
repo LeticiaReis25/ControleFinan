@@ -1,6 +1,10 @@
-function cadastrar(dados, campos) {
-    const usuarioId = Number(campos.usuarioId);
+import * as metasModel from "../models/metas.model.js";
+import * as usuariosModel from "../models/usuarios.model.js";
+
+async function cadastrar(campos) {
+    const usuarioId = campos.usuarioId;
     const valorObjetivo = Number(campos.valorObjetivo);
+
     const valorAtual = campos.valorAtual === undefined
         ? 0
         : Number(campos.valorAtual);
@@ -8,8 +12,10 @@ function cadastrar(dados, campos) {
     const { nome, dataLimite } = campos;
 
     if (
-        !Number.isInteger(usuarioId) ||
-        !nome ||
+        typeof usuarioId !== "string" ||
+        !usuarioId.trim() ||
+        typeof nome !== "string" ||
+        !nome.trim() ||
         !dataLimite ||
         !Number.isFinite(valorObjetivo)
     ) {
@@ -32,7 +38,9 @@ function cadastrar(dados, campos) {
         };
     }
 
-    if (!dados.usuarios.some(u => u.id === usuarioId)) {
+    const usuario = await usuariosModel.buscarPorId(usuarioId);
+
+    if (!usuario) {
         return {
             status: 404,
             body: { erro: "Usuário não encontrado." }
@@ -40,29 +48,36 @@ function cadastrar(dados, campos) {
     }
 
     const meta = {
-        id: dados.idMeta++,
         usuarioId,
-        nome,
+        nome: nome.trim(),
         valorObjetivo,
         valorAtual,
         dataLimite
     };
 
-    dados.metas.push(meta);
+    const id = await metasModel.inserir(meta);
 
-    return { status: 201, body: meta };
+    return {
+        status: 201,
+        body: { _id: id, ...meta }
+    };
 }
 
-function listar(dados, usuarioId) {
-    const resultado = usuarioId
-        ? dados.metas.filter(m => m.usuarioId === Number(usuarioId))
-        : dados.metas;
+async function listar(usuarioId) {
+    let metas = await metasModel.buscarTodas();
 
-    return { status: 200, body: resultado };
+    if (usuarioId) {
+        metas = metas.filter(m => m.usuarioId === usuarioId);
+    }
+
+    return {
+        status: 200,
+        body: metas
+    };
 }
 
-function buscar(dados, id) {
-    const meta = dados.metas.find(m => m.id === Number(id));
+async function buscar(id) {
+    const meta = await metasModel.buscarPorId(id);
 
     if (!meta) {
         return {
@@ -71,11 +86,14 @@ function buscar(dados, id) {
         };
     }
 
-    return { status: 200, body: meta };
+    return {
+        status: 200,
+        body: meta
+    };
 }
 
-function atualizar(dados, id, campos) {
-    const meta = dados.metas.find(m => m.id === Number(id));
+async function atualizar(id, campos) {
+    const meta = await metasModel.buscarPorId(id);
 
     if (!meta) {
         return {
@@ -84,59 +102,77 @@ function atualizar(dados, id, campos) {
         };
     }
 
-    const { nome, valorObjetivo, valorAtual, dataLimite } = campos;
+    const atualizacoes = {};
 
-    if (nome !== undefined) {
-        if (typeof nome !== "string" || !nome.trim()) {
+    if (campos.nome !== undefined) {
+        if (
+            typeof campos.nome !== "string" ||
+            !campos.nome.trim()
+        ) {
             return {
                 status: 400,
                 body: { erro: "Nome inválido." }
             };
         }
 
-        meta.nome = nome.trim();
+        atualizacoes.nome = campos.nome.trim();
     }
 
-    if (valorObjetivo !== undefined) {
-        if (!Number.isFinite(Number(valorObjetivo)) || Number(valorObjetivo) <= 0) {
+    if (campos.valorObjetivo !== undefined) {
+        if (
+            !Number.isFinite(Number(campos.valorObjetivo)) ||
+            Number(campos.valorObjetivo) <= 0
+        ) {
             return {
                 status: 400,
-                body: { erro: "O valor objetivo deve ser maior que zero." }
+                body: {
+                    erro: "O valor objetivo deve ser maior que zero."
+                }
             };
         }
 
-        meta.valorObjetivo = Number(valorObjetivo);
+        atualizacoes.valorObjetivo = Number(campos.valorObjetivo);
     }
 
-    if (valorAtual !== undefined) {
-        if (!Number.isFinite(Number(valorAtual)) || Number(valorAtual) < 0) {
+    if (campos.valorAtual !== undefined) {
+        if (
+            !Number.isFinite(Number(campos.valorAtual)) ||
+            Number(campos.valorAtual) < 0
+        ) {
             return {
                 status: 400,
                 body: { erro: "Valor atual inválido." }
             };
         }
 
-        meta.valorAtual = Number(valorAtual);
+        atualizacoes.valorAtual = Number(campos.valorAtual);
     }
 
-    if (dataLimite !== undefined) {
-        meta.dataLimite = dataLimite;
+    if (campos.dataLimite !== undefined) {
+        atualizacoes.dataLimite = campos.dataLimite;
     }
 
-    return { status: 200, body: meta };
+    if (Object.keys(atualizacoes).length > 0) {
+        await metasModel.atualizar(id, atualizacoes);
+    }
+
+    return {
+        status: 200,
+        body: { ...meta, ...atualizacoes }
+    };
 }
 
-function excluir(dados, id) {
-    id = Number(id);
+async function excluir(id) {
+    const meta = await metasModel.buscarPorId(id);
 
-    if (!dados.metas.some(m => m.id === id)) {
+    if (!meta) {
         return {
             status: 404,
             body: { erro: "Meta não encontrada." }
         };
     }
 
-    dados.metas = dados.metas.filter(m => m.id !== id);
+    await metasModel.remover(id);
 
     return { status: 204 };
 }

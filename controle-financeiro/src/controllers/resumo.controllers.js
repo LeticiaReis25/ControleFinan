@@ -1,9 +1,7 @@
-
 import resumoService from "../services/resumo.services.js";
 
-export function consultar(req, res) {
-    const resultado = resumoService.consultar(
-        req.app.locals.dados,
+export async function consultar(req, res) {
+    const resultado = await resumoService.consultar(
         req.query.usuarioId,
         req.query.mes
     );

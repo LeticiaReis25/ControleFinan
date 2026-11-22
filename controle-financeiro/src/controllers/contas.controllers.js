@@ -1,8 +1,7 @@
 import contasService from "../services/contas.services.js";
 
-export function cadastrar(req, res) {
-    const resultado = contasService.cadastrar(
-        req.app.locals.dados,
+export async function cadastrar(req, res) {
+    const resultado = await contasService.cadastrar(
         req.body.nome,
         req.body.usuarioId
     );
@@ -10,20 +9,16 @@ export function cadastrar(req, res) {
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function listar(req, res) {
-    const resultado = contasService.listar(
-        req.app.locals.dados,
+export async function listar(req, res) {
+    const resultado = await contasService.listar(
         req.query.usuarioId
     );
 
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function saldo(req, res) {
-    const resultado = contasService.saldo(
-        req.app.locals.dados,
-        req.params.id
-    );
+export async function saldo(req, res) {
+    const resultado = await contasService.saldo(req.params.id);
 
     return res.status(resultado.status).json(resultado.body);
 }

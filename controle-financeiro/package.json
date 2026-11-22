@@ -4,9 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  
     "test": "echo \"Error: no test specified\" && exit 1",
-     "db:up": "docker start mongo-tarefas || docker run -d --name mongo-tarefas -p 127.0.0.1:27017:27017 -v mongo-tarefas-data:/data/db mongo:8",
+    "db:up": "docker start mongo-tarefas || docker run -d --name mongo-tarefas -p 127.0.0.1:27017:27017 -v mongo-tarefas-data:/data/db mongo:8",
     "db:down": "docker stop mongo-tarefas",
     "db:logs": "docker logs -f mongo-tarefas",
     "db:reset": "docker rm -f mongo-tarefas; docker volume rm mongo-tarefas-data",
@@ -19,6 +18,8 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "dotenv": "^18.0.10",
+    "mongodb": "^7.9.1"
   }
 }

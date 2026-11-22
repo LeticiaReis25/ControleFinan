@@ -1,8 +1,7 @@
 import usuariosService from "../services/usuarios.services.js";
 
-export function cadastrar(req, res) {
-    const resultado = usuariosService.cadastrar(
-        req.app.locals.dados,
+export async function cadastrar(req, res) {
+    const resultado = await usuariosService.cadastrar(
         req.body.nome,
         req.body.email
     );
@@ -10,23 +9,20 @@ export function cadastrar(req, res) {
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function listar(req, res) {
-    const resultado = usuariosService.listar(req.app.locals.dados);
-    return res.status(resultado.status).json(resultado.body);
-}
-
-export function buscar(req, res) {
-    const resultado = usuariosService.buscar(
-        req.app.locals.dados,
-        req.params.id
-    );
+export async function listar(req, res) {
+    const resultado = await usuariosService.listar();
 
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function atualizar(req, res) {
-    const resultado = usuariosService.atualizar(
-        req.app.locals.dados,
+export async function buscar(req, res) {
+    const resultado = await usuariosService.buscar(req.params.id);
+
+    return res.status(resultado.status).json(resultado.body);
+}
+
+export async function atualizar(req, res) {
+    const resultado = await usuariosService.atualizar(
         req.params.id,
         req.body.nome,
         req.body.email
@@ -35,11 +31,8 @@ export function atualizar(req, res) {
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function excluir(req, res) {
-    const resultado = usuariosService.excluir(
-        req.app.locals.dados,
-        req.params.id
-    );
+export async function excluir(req, res) {
+    const resultado = await usuariosService.excluir(req.params.id);
 
     if (resultado.status === 204) {
         return res.status(204).end();

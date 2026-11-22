@@ -1,14 +1,23 @@
-function cadastrar(dados, nome, usuarioId) {
-    usuarioId = Number(usuarioId);
+import * as contasModel from "../models/contas.model.js";
+import * as usuariosModel from "../models/usuarios.model.js";
+import * as lancamentosModel from "../models/lancamentos.model.js";
 
-    if (!nome || !Number.isInteger(usuarioId)) {
+async function cadastrar(nome, usuarioId) {
+    if (
+        typeof nome !== "string" ||
+        !nome.trim() ||
+        typeof usuarioId !== "string" ||
+        !usuarioId.trim()
+    ) {
         return {
             status: 400,
             body: { erro: "Nome e usuarioId são obrigatórios." }
         };
     }
 
-    if (!dados.usuarios.some(u => u.id === usuarioId)) {
+    const usuario = await usuariosModel.buscarPorId(usuarioId);
+
+    if (!usuario) {
         return {
             status: 404,
             body: { erro: "Usuário não encontrado." }
@@ -16,26 +25,33 @@ function cadastrar(dados, nome, usuarioId) {
     }
 
     const conta = {
-        id: dados.idConta++,
-        nome,
+        nome: nome.trim(),
         usuarioId
     };
 
-    dados.contas.push(conta);
+    const id = await contasModel.inserir(conta);
 
-    return { status: 201, body: conta };
+    return {
+        status: 201,
+        body: { _id: id, ...conta }
+    };
 }
 
-function listar(dados, usuarioId) {
-    const resultado = usuarioId
-        ? dados.contas.filter(c => c.usuarioId === Number(usuarioId))
-        : dados.contas;
+async function listar(usuarioId) {
+    let contas = await contasModel.buscarTodas();
 
-    return { status: 200, body: resultado };
+    if (usuarioId) {
+        contas = contas.filter(c => c.usuarioId === usuarioId);
+    }
+
+    return {
+        status: 200,
+        body: contas
+    };
 }
 
-function saldo(dados, id) {
-    const conta = dados.contas.find(c => c.id === Number(id));
+async function saldo(id) {
+    const conta = await contasModel.buscarPorId(id);
 
     if (!conta) {
         return {
@@ -44,8 +60,10 @@ function saldo(dados, id) {
         };
     }
 
-    const movimentos = dados.lancamentos.filter(
-        l => l.contaId === conta.id
+    const lancamentos = await lancamentosModel.buscarTodas();
+
+    const movimentos = lancamentos.filter(
+        l => l.contaId === id
     );
 
     const receitas = movimentos

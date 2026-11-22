@@ -1,36 +1,25 @@
-
 import metasService from "../services/metas.services.js";
 
-export function cadastrar(req, res) {
-    const resultado = metasService.cadastrar(
-        req.app.locals.dados,
-        req.body
-    );
+export async function cadastrar(req, res) {
+    const resultado = await metasService.cadastrar(req.body);
 
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function listar(req, res) {
-    const resultado = metasService.listar(
-        req.app.locals.dados,
-        req.query.usuarioId
-    );
+export async function listar(req, res) {
+    const resultado = await metasService.listar(req.query.usuarioId);
 
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function buscar(req, res) {
-    const resultado = metasService.buscar(
-        req.app.locals.dados,
-        req.params.id
-    );
+export async function buscar(req, res) {
+    const resultado = await metasService.buscar(req.params.id);
 
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function atualizar(req, res) {
-    const resultado = metasService.atualizar(
-        req.app.locals.dados,
+export async function atualizar(req, res) {
+    const resultado = await metasService.atualizar(
         req.params.id,
         req.body
     );
@@ -38,11 +27,8 @@ export function atualizar(req, res) {
     return res.status(resultado.status).json(resultado.body);
 }
 
-export function excluir(req, res) {
-    const resultado = metasService.excluir(
-        req.app.locals.dados,
-        req.params.id
-    );
+export async function excluir(req, res) {
+    const resultado = await metasService.excluir(req.params.id);
 
     if (resultado.status === 204) {
         return res.status(204).end();
