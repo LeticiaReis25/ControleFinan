@@ -1,29 +1,41 @@
-import { MongoClient } from "mongodb";
-import "dotenv/config";
+// src/config/database.js
+// Conexão com o MongoDB.
+//
+// MongoClient: objeto do driver oficial que representa a conexão com o servidor MongoDB.
+// Ele mantém um pool de conexões internamente, por isso é criado UMA vez, na inicialização,
+// e reutilizado por todas as requisições. Abrir uma conexão a cada requisição seria lento
+// e desperdiçaria recursos do servidor.
+//
+// ObjectId: tipo de identificador que o MongoDB gera automaticamente para cada documento
+// (campo `_id`). É um valor de 24 caracteres hexadecimais, como "65f1c2a9e4b0a1b2c3d4e5f6".
+// Como ele não é um número sequencial, o service converte `_id` em `id` (string) antes de
+// devolver os dados para a API.
+import { MongoClient } from 'mongodb';
 
-const uri = process.env.MONGO_URI;
-const nomeBanco = process.env.DB_NAME;
+let client;
+let db;
 
-const cliente = new MongoClient(uri);
+export async function conectar() {
+  const uri = process.env.MONGODB_URI;
+  const nomeDoBanco = process.env.MONGODB_DB_NAME;
 
-let banco;
-
-export async function conectarBanco() {
-  if (banco) return banco;
-
-  await cliente.connect();
-
-  banco = cliente.db(nomeBanco);
-
-  console.log("MongoDB conectado com sucesso!");
-
-  return banco;
-}
-
-export function obterBanco() {
-  if (!banco) {
-    throw new Error("Banco de dados ainda não conectado.");
+  if (!uri || !nomeDoBanco) {
+    throw new Error('Defina MONGODB_URI e MONGODB_DB_NAME no arquivo .env.');
   }
 
-  return banco;
+  client = new MongoClient(uri);
+  await client.connect();
+  db = client.db(nomeDoBanco);
+  return db;
+}
+
+// Retorna o banco conectado. Os models usam esta função para acessar as coleções.
+export function obterBanco() {
+  return db;
+}
+
+export async function desconectar() {
+  if (client) {
+    await client.close();
+  }
 }

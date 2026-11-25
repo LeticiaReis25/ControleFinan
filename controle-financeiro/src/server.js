@@ -1,19 +1,24 @@
-import app from "./app.js";
-import { conectarBanco } from "./config/database.js";
+// src/server.js
+import 'dotenv/config';
+import app from './app.js';
+import { conectar, desconectar } from './config/database.js';
 
-const PORTA = process.env.PORT || 3000;
-
-async function iniciarServidor() {
-  try {
-    await conectarBanco();
-
-    app.listen(PORTA, () => {
-      console.log(`Servidor rodando na porta ${PORTA}`);
-    });
-  } catch (erro) {
-    console.error("Erro ao iniciar a aplicação:", erro);
-    process.exit(1);
-  }
+try {
+  await conectar();
+  console.log('Conectado ao MongoDB');
+} catch (error) {
+  console.error('Não foi possível conectar ao MongoDB. Verifique MONGODB_URI, MONGODB_DB_NAME e se o servidor está em execução.');
+  console.error(error.message);
+  process.exit(1);
 }
 
-iniciarServidor();
+const servidor = app.listen(3000, () => console.log('API em http://localhost:3000'));
+
+async function encerrar() {
+  servidor.close();
+  await desconectar();
+  process.exit(0);
+}
+
+process.on('SIGINT', encerrar);
+process.on('SIGTERM', encerrar);
